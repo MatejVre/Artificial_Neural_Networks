@@ -4,15 +4,41 @@ import csv
 
 class ANNClassification:
     # implement me
-    def __init__(self):
-        pass
+    def __init__(self, units=[], lambda_=0):
+        self.units = units
+        self.weights = []
+        self.biases = []
+        self.lambda_ = lambda_
+
+        self.input_layer_size = None
+        self.output_layer_size = None
 
     def build(self, X, y):
-        pass
+        #input and output layers depend on the data?
+        self.input_layer_size = X.shape[1]
+        
+        unique_y = np.unique(y)
+        self.output_layer_size = len(unique_y)
+
+        previous_layer_output_size = self.input_layer_size
+        for unit in self.units:
+
+            self.weights.append(np.ones((unit, previous_layer_output_size))) #only for testing puropses for now, will be changed to random later :)
+            previous_layer_output_size = unit
+
+            self.biases.append(np.ones((unit)))
+        
+        self.weights.append(np.ones((self.output_layer_size, previous_layer_output_size)))
+
+        self.biases.append(np.ones(self.output_layer_size))
 
     def predict(self, X):
-        pass
 
+        assert X.shape[1] == self.input_layer_size
+        
+        preds = np.zeros((X.shape[0], self.output_layer_size))
+
+        
 
 class ANNRegression:
     # implement me too, please
