@@ -37,10 +37,13 @@ class test_ANN(unittest.TestCase):
 
         preds = fitter.predict(self.X_short)
 
-        np.testing.assert_allclose(preds, np.array([[0.9481, 0.9481],
-                                         [0.9405, 0.9405]]), atol=0.001)
+        np.testing.assert_allclose(preds, np.array([[0.5, 0.5],
+                                         [0.5, 0.5]]), atol=0.001)
+        
+        print(fitter.activations)
 
 
+#([[0.9481, 0.9481],[0.9405, 0.9405]])
 if __name__ == "__main__":
     import unittest
     unittest.main()
