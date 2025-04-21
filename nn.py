@@ -35,10 +35,24 @@ class ANNClassification:
     def predict(self, X):
 
         assert X.shape[1] == self.input_layer_size
-        
+
         preds = np.zeros((X.shape[0], self.output_layer_size))
 
+        previous_output = X
+
+        for i in range(len(self.weights)):
+
+            weights_i = self.weights[i]
+            biases_i = self.biases[i]
+
+            z = (np.matmul(previous_output, weights_i) + biases_i)
+            a = self.sigmoid(z)
+            previous_output = a
         
+        return previous_output
+    
+    def sigmoid(self, z):
+        return 1.0 / (1.0 + np.exp(-z))
 
 class ANNRegression:
     # implement me too, please

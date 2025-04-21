@@ -13,6 +13,10 @@ class test_ANN(unittest.TestCase):
                            [0, 1, 1]])
         self.y = np.array([1, 1, 0, 1, 1])
 
+        self.X_short = np.array([[1, 1],
+                                 [0,1]])
+        self.y_short = np.array([1,0])
+
     def test_build(self):
         fitter = ANNClassification(units=[7, 21, 25])
         fitter.build(self.X, self.y)
@@ -26,6 +30,15 @@ class test_ANN(unittest.TestCase):
         self.assertEqual(fitter.biases[1].shape[0], 21)
         self.assertEqual(fitter.biases[2].shape[0], 25)
         self.assertEqual(fitter.biases[3].shape[0], 2)
+
+    def test_forward_pass(self):
+        fitter = ANNClassification(units=[2])
+        fitter.build(self.X_short, self.y_short)
+
+        preds = fitter.predict(self.X_short)
+
+        np.testing.assert_allclose(preds, np.array([[0.9481, 0.9481],
+                                         [0.9405, 0.9405]]), atol=0.001)
 
 
 if __name__ == "__main__":
