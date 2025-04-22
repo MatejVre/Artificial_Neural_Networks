@@ -4,7 +4,7 @@ import csv
 
 class ANNClassification:
     # implement me
-    def __init__(self, units=[], lambda_=0):
+    def __init__(self, units=[], lambda_=0, testing=False):
         self.units = units
         self.weights = []
         self.biases = []
@@ -16,6 +16,10 @@ class ANNClassification:
         self.input_layer_size = None
         self.output_layer_size = None
 
+        self.gradients_w = [] #this part here is meant for testing the network
+        self.gradients_b = []
+        self.testing = testing
+
     def build(self, X, y):
         #input and output layers depend on the data?
         self.input_layer_size = X.shape[1]
@@ -26,12 +30,15 @@ class ANNClassification:
         previous_layer_output_size = self.input_layer_size
         for unit in self.units:
 
-            self.weights.append(np.random.uniform(0, 1, size=(unit, previous_layer_output_size))) #only for testing puropses for now, will be changed to random later :)
+            w = np.random.uniform(0, 1, size=(unit, previous_layer_output_size)) if not self.testing else np.ones((unit, previous_layer_output_size))
+
+            self.weights.append(w) #only for testing puropses for now, will be changed to random later :)
             previous_layer_output_size = unit
 
             self.biases.append(np.ones((unit)))
         
-        self.weights.append(np.random.uniform(0, 1, size=(self.output_layer_size, previous_layer_output_size)))
+        w = np.random.uniform(0, 1, size=(self.output_layer_size, previous_layer_output_size)) if not self.testing else np.ones((self.output_layer_size, previous_layer_output_size))
+        self.weights.append(w)
 
         self.biases.append(np.ones(self.output_layer_size))
 
@@ -82,38 +89,46 @@ class ANNClassification:
             predictions = self.predict(X)
             delta = predictions - encoded_labels
 
+            #TESTING
+            self.gradients_w = [0] * len(self.weights)
+            self.gradients_b = [0] * len(self.biases)
+
             for i in range(len(self.weights), 0, -1):
 
                 #print(i)
-                if i == len(self.weights):
-                    derivative_w = 1/X.shape[0] * (delta.T @ self.activations[i-1])
-                    derivative_b = np.mean(delta, axis=0)
+                # if i == len(self.weights):
+                #     derivative_w = 1/X.shape[0] * (delta.T @ self.activations[i-1])
+                #     derivative_b = np.mean(delta, axis=0)
 
-                    print("here")
-                    print(derivative_w)
-                    print(derivative_b)
+                #     # print("here")
+                #     # print(derivative_w)
+                #     # print(derivative_b)
                 
-                else:
-                    derivative_w = 1/X.shape[0] * (delta.T @ self.activations[i-1])
-                    derivative_b = np.mean(delta, axis=0)
-                    print("HI")
-                    print(derivative_w)
-                    print(derivative_b)
+                # else:
+                derivative_w = (delta.T @ self.activations[i-1]) #1/X.shape[0] * 
+                derivative_b = np.sum(delta, axis=0)
+
+                self.gradients_w[i-1] = derivative_w
+                self.gradients_b[i-1] = derivative_b
+                    # print("HI")
+                # print(derivative_w)
+                # print(derivative_b)
 
                 delta = (delta @ self.weights[i-1]) * (self.activations[i-1] * (1-self.activations[i-1]))
-                # self.weights[i-1] -= lr*derivative_w
-                # self.biases[i-1] -= lr*derivative_b
+                if not self.testing:
+                    self.weights[i-1] -= lr*derivative_w
+                    self.biases[i-1] -= lr*derivative_b
 
         return self
 
-
-
-        
     def sigmoid(self, z):
         return 1.0 / (1.0 + np.exp(-z))
     
     def softmax(self, z):
         return np.exp(z) / np.sum(np.exp(z), axis=1, keepdims=True)
+    
+    def weights(self): #this seems pointless
+        return self.weights
     
 def cross_entropy_loss(y_pred, y_true, epsilon=1e-15):
 
@@ -122,7 +137,7 @@ def cross_entropy_loss(y_pred, y_true, epsilon=1e-15):
 
     # Compute cross-entropy
     loss = -np.sum(y_true * np.log(y_pred), axis=1)  # shape (batch_size,)
-    return np.mean(loss)
+    return np.sum(loss)
 
 class ANNRegression:
     # implement me too, please
@@ -167,8 +182,31 @@ def compute_numerical_gradient(param, param_index, model, X, y, epsilon=1e-4):
 
     return (loss_plus - loss_minus) / (2 * epsilon)
 
-if __name__ == "__main__":
+def compare_gradients(X, y, y_encoded):
+    #testing true will not update the weights
+    fitter = ANNClassification(units=[3, 4], testing=True)
+    fitter.fit(X, y)
 
+    for u, grad in enumerate(fitter.gradients_w):
+        numerical_gradients_w = np.zeros_like(grad)
+        for i in range(grad.shape[0]):
+            for j in range(grad.shape[1]):
+                numerical_gradients_w[i, j] = (compute_numerical_gradient(fitter.weights[u], (i,j), fitter, X, y_encoded))
+            
+
+        np.testing.assert_almost_equal(grad, numerical_gradients_w, decimal=6)
+    print("All weight gradients match!")
+
+    for u, grad in enumerate(fitter.gradients_b):
+            numerical_gradients_b = np.zeros_like(grad)
+            for i in range(grad.shape[0]):
+                numerical_gradients_b[i] = (compute_numerical_gradient(fitter.biases[u], i, fitter, X, y_encoded))
+
+            np.testing.assert_almost_equal(grad, numerical_gradients_b, decimal=6)
+    print("All bias gradients match!")
+
+if __name__ == "__main__":
+    pass
     # example NN use
     # fitter = ANNClassification(units=[3,4], lambda_=0)
     # X = np.array([
@@ -198,32 +236,25 @@ if __name__ == "__main__":
                           [1, 0],
                           [1, 0],
                           [0, 1]])
-    
-    fitter = ANNClassification(units=[2])
-    fitter.fit(X, y)
-
-    # fitter = ANNClassification(units=[2])
-    # fitter.build(X, y)
-    # print("predicting")
-
-    numerical_gradients_w = np.zeros_like(fitter.weights[-2])
-    numerical_gradients_b = np.zeros_like(fitter.biases[-2])
-    for i in range(fitter.weights[-2].shape[0]):
-        for j in range(fitter.weights[-2].shape[1]):
-            numerical_gradients_w[i, j] = (compute_numerical_gradient(fitter.weights[-2], (i,j), fitter, X, y_encoded))
-
-    for u in range(fitter.biases[-2].shape[0]):
-            numerical_gradients_b[u] = (compute_numerical_gradient(fitter.biases[-2], u, fitter, X, y_encoded))
             
 
-    print(numerical_gradients_w)
-    print(numerical_gradients_b)
+    # print(numerical_gradients_w)
+    # print(numerical_gradients_b)
 
-    # X, y = doughnut()
-    # fitter = ANNClassification(units=[5])
-    # fitter.fit(X, y, lr=0.1, epochs=5000)
+    X, y = doughnut()
+    fitter = ANNClassification(units=[3])
+    fitter.fit(X, y, lr=0.01, epochs=3000)
 
-    # preds = np.argmax(fitter.predict(X), axis=1)
-    # print(preds)
+    preds = np.argmax(fitter.predict(X), axis=1)
+    print(preds)
+    print(y)
+    print(np.mean(preds == y))
+    #compare_gradients(X, y, y_encoded)
+    X, y = squares()
+    fitter = ANNClassification(units=[5])
+    fitter.fit(X, y, lr=0.01, epochs=5000)
 
-
+    preds = np.argmax(fitter.predict(X), axis=1)
+    print(preds)
+    print(y)
+    print(np.mean(preds == y))
