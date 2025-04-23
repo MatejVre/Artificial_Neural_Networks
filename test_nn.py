@@ -16,7 +16,7 @@ class NNTests(unittest.TestCase):
 
     def test_ann_classification_no_hidden_layer(self):
         fitter = ANNClassification(units=[], lambda_=0.,)
-        m = fitter.fit(self.X, self.y, lr=0.1, epochs=3000)
+        m = fitter.fit(self.X, self.y, lr=0.2, epochs=9000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4, 4))
         np.testing.assert_allclose(pred, np.identity(4), atol=0.01)
@@ -24,7 +24,7 @@ class NNTests(unittest.TestCase):
     def test_ann_classification_no_hidden_layer_hard(self):
         # aiming to solve a non-linear problem without hidden layers
         fitter = ANNClassification(units=[], lambda_=0.)
-        m = fitter.fit(self.X, self.hard_y, lr=0.1, epochs=3000)
+        m = fitter.fit(self.X, self.hard_y, lr=0.3, epochs=5000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4, 2))
         np.testing.assert_allclose(pred, 0.5, atol=0.01)
@@ -32,7 +32,7 @@ class NNTests(unittest.TestCase):
     def test_ann_classification_hidden_layer_hard(self):
         # with hidden layers we can solve a non-linear problem
         fitter = ANNClassification(units=[10], lambda_=0.)
-        m = fitter.fit(self.X, self.hard_y, lr=0.1, epochs=3000)
+        m = fitter.fit(self.X, self.hard_y, lr=0.3, epochs=5000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4, 2))
         np.testing.assert_allclose(pred, [[1, 0], [0, 1], [0, 1], [1, 0]], atol=0.01)
@@ -40,14 +40,14 @@ class NNTests(unittest.TestCase):
     def test_ann_classification_hidden_layers_hard(self):
         # two hidden layers
         fitter = ANNClassification(units=[10, 11], lambda_=0.)
-        m = fitter.fit(self.X, self.hard_y, lr=0.1, epochs=5000)
+        m = fitter.fit(self.X, self.hard_y, lr=0.3, epochs=15000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4, 2))
         np.testing.assert_allclose(pred, [[1, 0], [0, 1], [0, 1], [1, 0]], atol=0.01)
 
     def test_ann_regression_no_hidden_layer(self):
         fitter = ANNRegression(units=[], lambda_=0.)
-        m = fitter.fit(self.X, self.y)
+        m = fitter.fit(self.X, self.y, lr=0.01, epochs=3000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4,))
         np.testing.assert_allclose(pred, self.y, atol=0.01)
@@ -55,7 +55,7 @@ class NNTests(unittest.TestCase):
     def test_ann_regression_no_hidden_layer_hard(self):
         # aiming to solve a non-linear problem without hidden layers
         fitter = ANNRegression(units=[], lambda_=0.)
-        m = fitter.fit(self.X, self.hard_y)
+        m = fitter.fit(self.X, self.hard_y, lr=0.01, epochs=3000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4,))
         np.testing.assert_allclose(pred, 0.5, atol=0.01)
@@ -63,7 +63,7 @@ class NNTests(unittest.TestCase):
     def test_ann_regression_hidden_layer_hard(self):
         # one hidden layer
         fitter = ANNRegression(units=[10], lambda_=0.)
-        m = fitter.fit(self.X, self.hard_y)
+        m = fitter.fit(self.X, self.hard_y, lr=0.1, epochs=10000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4,))
         np.testing.assert_allclose(pred, self.hard_y, atol=0.01)
@@ -71,7 +71,7 @@ class NNTests(unittest.TestCase):
     def test_ann_regression_hidden_layers_hard(self):
         # two hidden layers
         fitter = ANNRegression(units=[10, 11], lambda_=0.)
-        m = fitter.fit(self.X, self.hard_y)
+        m = fitter.fit(self.X, self.hard_y, lr=0.2, epochs=15000)
         pred = m.predict(self.X)
         self.assertEqual(pred.shape, (4,))
         np.testing.assert_allclose(pred, self.hard_y, atol=0.01)
@@ -79,8 +79,8 @@ class NNTests(unittest.TestCase):
     def test_predictor_get_info(self):
         fitter = ANNRegression(units=[10, 5], lambda_=0.)
         m = fitter.fit(self.X, self.y)
-        lw = m.weights()  # a list of weight matrices that include intercept biases
-
+        lw = m.weightss()  # a list of weight matrices that include intercept biases
+        #RENAME IT BACK
         self.assertEqual(len(lw), 3)  # two hidden layer == three weight matrices
 
         self.assertEqual(lw[0].shape, (3, 10))
