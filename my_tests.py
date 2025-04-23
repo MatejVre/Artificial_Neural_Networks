@@ -21,10 +21,10 @@ class test_ANN(unittest.TestCase):
         fitter = ANNClassification(units=[7, 21, 25], testing=True)
         fitter.build(self.X, self.y)
 
-        self.assertEqual(fitter.weights[0].shape, (7, 3))
-        self.assertEqual(fitter.weights[1].shape, (21, 7))
-        self.assertEqual(fitter.weights[2].shape, (25, 21))
-        self.assertEqual(fitter.weights[3].shape, (2, 25))
+        self.assertEqual(fitter.ws[0].shape, (7, 3))
+        self.assertEqual(fitter.ws[1].shape, (21, 7))
+        self.assertEqual(fitter.ws[2].shape, (25, 21))
+        self.assertEqual(fitter.ws[3].shape, (2, 25))
 
         self.assertEqual(fitter.biases[0].shape[0], 7)
         self.assertEqual(fitter.biases[1].shape[0], 21)
@@ -44,10 +44,10 @@ class test_ANN(unittest.TestCase):
         fitter = ANNRegression(units=[7, 21, 25], testing=True)
         fitter.build(self.X, self.y)
 
-        self.assertEqual(fitter.weights[0].shape, (7, 3))
-        self.assertEqual(fitter.weights[1].shape, (21, 7))
-        self.assertEqual(fitter.weights[2].shape, (25, 21))
-        self.assertEqual(fitter.weights[3].shape, (1, 25))
+        self.assertEqual(fitter.ws[0].shape, (7, 3))
+        self.assertEqual(fitter.ws[1].shape, (21, 7))
+        self.assertEqual(fitter.ws[2].shape, (25, 21))
+        self.assertEqual(fitter.ws[3].shape, (1, 25))
 
         self.assertEqual(fitter.biases[0].shape[0], 7)
         self.assertEqual(fitter.biases[1].shape[0], 21)

@@ -6,7 +6,7 @@ class ANNClassification:
     # implement me
     def __init__(self, units=[], activation_function_names=[],lambda_=0, testing=False, testing_grad=False):
         self.units = units
-        self.weights = []
+        self.ws = []
         self.biases = []
         self.lambda_ = lambda_
         self.activation_function_names = activation_function_names
@@ -58,13 +58,13 @@ class ANNClassification:
 
             w = np.random.uniform(0, 1, size=(unit, previous_layer_output_size)) if not self.testing else np.ones((unit, previous_layer_output_size))
 
-            self.weights.append(w) #only for testing puropses for now, will be changed to random later :)
+            self.ws.append(w) #only for testing puropses for now, will be changed to random later :)
             previous_layer_output_size = unit
 
             self.biases.append(np.ones((unit)))
         
         w = np.random.uniform(0, 1, size=(self.output_layer_size, previous_layer_output_size)) if not self.testing else np.ones((self.output_layer_size, previous_layer_output_size))
-        self.weights.append(w)
+        self.ws.append(w)
 
         self.biases.append(np.ones(self.output_layer_size))
 
@@ -77,15 +77,15 @@ class ANNClassification:
         self.zs = []
         self.activations = [previous_output]
 
-        for i in range(len(self.weights)):
+        for i in range(len(self.ws)):
 
-            weights_i = self.weights[i]
+            weights_i = self.ws[i]
             biases_i = self.biases[i]
 
             z = (np.dot(previous_output, weights_i.T) + biases_i)
             self.zs.append(z)
 
-            if i == len(self.weights) -1:
+            if i == len(self.ws) -1:
                 a = softmax(z)
             
             else:
@@ -112,16 +112,18 @@ class ANNClassification:
             delta = predictions - encoded_labels
 
             #TESTING
-            self.gradients_w = [0] * len(self.weights)
+            self.gradients_w = [0] * len(self.ws)
             self.gradients_b = [0] * len(self.biases)
 
-            for i in range(len(self.weights), 0, -1):
+            for i in range(len(self.ws), 0, -1):
                 
                 derivative_w = 1/X.shape[0] * (delta.T @ self.activations[i-1]) #1/X.shape[0] * in case i use the average of the loss (to be decided)
                 derivative_b = np.mean(delta, axis=0)
 
                 self.gradients_w[i-1] = derivative_w
                 self.gradients_b[i-1] = derivative_b
+
+                derivative_w += 2 * self.lambda_ * self.ws[i-1]
 
                 if i > 1:
                     if self.activation_function_names[i-2] == "sigmoid":
@@ -130,13 +132,26 @@ class ANNClassification:
                     elif self.activation_function_names[i-2] == "relu":
                         der = (self.zs[i-2] > 0).astype(float)
 
-                    delta = (delta @ self.weights[i-1]) * der
+                    delta = (delta @ self.ws[i-1]) * der
 
                 if not self.testing_grad:
-                    self.weights[i-1] -= lr*derivative_w
+                    self.ws[i-1] -= lr*derivative_w
                     self.biases[i-1] -= lr*derivative_b
 
         return self
+    
+    def weights(self):
+        list = []
+        for i in range(len(self.ws)):
+            list.append((np.column_stack((self.ws[i], self.biases[i]))).T)
+        return list
+    
+    def loss(self, y_pred, y_true, epsilon=1e-15): #Cross entropy loss for classification
+
+        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+
+        loss = -np.sum(y_true * np.log(y_pred), axis=1)
+        return np.mean(loss) + self.lambda_ * sum(np.sum(w**2) for w in self.ws)
 
 def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
@@ -147,21 +162,13 @@ def softmax(z):
 def ReLU(z):
     return z * (z > 0)
 
-def weights(self): #this seems pointless
-    return self.weights
 
-def cross_entropy_loss(y_pred, y_true, epsilon=1e-15):
-
-    y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
-
-    loss = -np.sum(y_true * np.log(y_pred), axis=1)
-    return np.mean(loss)
 
 class ANNRegression:
 
     def __init__(self, units=[], activation_function_names=[], lambda_=0.0, testing=False, testing_grad=False):
         self.units = units
-        self.weights = []
+        self.ws = []
         self.biases = []
         self.lambda_ = lambda_
         self.activation_function_names = activation_function_names
@@ -207,13 +214,13 @@ class ANNRegression:
 
             w = np.random.uniform(0, 1, size=(unit, previous_layer_output_size)) if not self.testing else np.ones((unit, previous_layer_output_size))
 
-            self.weights.append(w) #only for testing puropses for now, will be changed to random later :)
+            self.ws.append(w) #only for testing puropses for now, will be changed to random later :)
             previous_layer_output_size = unit
 
             self.biases.append(np.ones((unit)))
         
         w = np.random.uniform(0, 1, size=(self.output_layer_size, previous_layer_output_size)) if not self.testing else np.ones((self.output_layer_size, previous_layer_output_size))
-        self.weights.append(w)
+        self.ws.append(w)
 
         self.biases.append(np.ones(self.output_layer_size))
 
@@ -226,15 +233,15 @@ class ANNRegression:
         self.zs = []
         self.activations = [previous_output]
 
-        for i in range(len(self.weights)):
+        for i in range(len(self.ws)):
 
-            weights_i = self.weights[i]
+            weights_i = self.ws[i]
             biases_i = self.biases[i]
 
             z = (np.dot(previous_output, weights_i.T) + biases_i)
             self.zs.append(z)
 
-            if i == len(self.weights) -1:
+            if i == len(self.ws) -1:
                 a = np.reshape(z, (-1)) #I want a vector instead of the matrix :)
             
             else:
@@ -255,13 +262,15 @@ class ANNRegression:
             delta = (predictions - y).reshape(-1, 1) #My past has come back to haunt me
 
             #TESTING
-            self.gradients_w = [0] * len(self.weights)
+            self.gradients_w = [0] * len(self.ws)
             self.gradients_b = [0] * len(self.biases)
 
-            for i in range(len(self.weights), 0, -1):
+            for i in range(len(self.ws), 0, -1):
 
                 derivative_w = 1/X.shape[0] * (delta.T @ self.activations[i-1]) #1/X.shape[0] * in case i use the average of the loss (to be decided)
                 derivative_b = np.mean(delta, axis=0)
+
+                derivative_w += 2 * self.lambda_ * self.ws[i-1]
 
                 self.gradients_w[i-1] = derivative_w
                 self.gradients_b[i-1] = derivative_b
@@ -273,22 +282,22 @@ class ANNRegression:
                     elif self.activation_function_names[i-2] == "relu":
                         der = (self.zs[i-2] > 0).astype(float)
 
-                    delta = (delta @ self.weights[i-1]) * der
+                    delta = (delta @ self.ws[i-1]) * der
                 if not self.testing_grad:
-                    self.weights[i-1] -= lr*derivative_w
+                    self.ws[i-1] -= lr*derivative_w
                     self.biases[i-1] -= lr*derivative_b
 
         return self
     
-    def weightss(self):
+    def weights(self):
         list = []
-        for i in range(len(self.weights)):
-            list.append((np.column_stack((self.weights[i], self.biases[i]))).T)
+        for i in range(len(self.ws)):
+            list.append((np.column_stack((self.ws[i], self.biases[i]))).T)
         return list
 
 
-def mean_squared_error(vals, true_vals):
-    return np.mean(1/2*(vals - true_vals)**2)
+    def loss(self, vals, true_vals): #MSE renamed to loss for generalization
+        return np.mean(1/2*(vals - true_vals)**2) + self.lambda_ * sum(np.sum(w**2) for w in self.ws)
 
 
 # data reading
@@ -317,18 +326,18 @@ def squares():
 def compute_numerical_gradient(param, param_index, model, X, y, epsilon=1e-4):
     original_value = param[param_index]
 
-    if type(model).__name__ == "ANNClassification":
-        loss_function = cross_entropy_loss
-    else:
-        loss_function = mean_squared_error
+    # if type(model).__name__ == "ANNClassification":
+    #     loss_function = cross_entropy_loss
+    # else:
+    #     loss_function = mean_squared_error
 
     param[param_index] = original_value + epsilon
     y_pred_plus = model.predict(X)
-    loss_plus = loss_function(y_pred_plus, y)
+    loss_plus = model.loss(y_pred_plus, y)
 
     param[param_index] = original_value - epsilon
     y_pred_minus = model.predict(X)
-    loss_minus = loss_function(y_pred_minus, y)
+    loss_minus = model.loss(y_pred_minus, y)
 
     param[param_index] = original_value
 
@@ -348,7 +357,7 @@ def compare_gradients(X, y, y_encoded, model):
         numerical_gradients_w = np.zeros_like(grad)
         for i in range(grad.shape[0]):
             for j in range(grad.shape[1]):
-                numerical_gradients_w[i, j] = (compute_numerical_gradient(model.weights[u], (i,j), model, X, y_to_input))
+                numerical_gradients_w[i, j] = (compute_numerical_gradient(model.ws[u], (i,j), model, X, y_to_input))
             
 
         np.testing.assert_almost_equal(grad, numerical_gradients_w, decimal=6)
@@ -415,13 +424,13 @@ if __name__ == "__main__":
     # print(preds)
     # print(y)
     # print(np.mean(preds == y))
-    fitter = ANNClassification(units=[2, 6, 3], activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
+    fitter = ANNClassification(units=[2, 6, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
     print(type(fitter).__name__)
     compare_gradients(X, y, y_encoded, fitter)
     print(fitter.activation_function_names)
 
 
-    fitter = ANNRegression(units=[2, 15, 4], activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
+    fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
     print(type(fitter).__name__)
     compare_gradients(X, y, y_encoded, fitter)
     print(fitter.activation_function_names)

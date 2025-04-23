@@ -79,8 +79,8 @@ class NNTests(unittest.TestCase):
     def test_predictor_get_info(self):
         fitter = ANNRegression(units=[10, 5], lambda_=0.)
         m = fitter.fit(self.X, self.y)
-        lw = m.weightss()  # a list of weight matrices that include intercept biases
-        #RENAME IT BACK
+        lw = m.weights()  # a list of weight matrices that include intercept biases
+
         self.assertEqual(len(lw), 3)  # two hidden layer == three weight matrices
 
         self.assertEqual(lw[0].shape, (3, 10))
