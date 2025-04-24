@@ -345,7 +345,7 @@ def compute_numerical_gradient(param, param_index, model, X, y, epsilon=1e-4):
 
 def compare_gradients(X, y, y_encoded, model):
     #testing true will not update the weights
-    model.fit(X, y, epochs=100)
+    model.fit(X, y, epochs=1)
 
     if type(model).__name__ == "ANNClassification":
         y_to_input = y_encoded
@@ -359,7 +359,8 @@ def compare_gradients(X, y, y_encoded, model):
             for j in range(grad.shape[1]):
                 numerical_gradients_w[i, j] = (compute_numerical_gradient(model.ws[u], (i,j), model, X, y_to_input))
             
-
+        print(grad)
+        print(numerical_gradients_w)
         np.testing.assert_almost_equal(grad, numerical_gradients_w, decimal=6)
     print("All weight gradients match!")
 
@@ -367,7 +368,8 @@ def compare_gradients(X, y, y_encoded, model):
             numerical_gradients_b = np.zeros_like(grad)
             for i in range(grad.shape[0]):
                 numerical_gradients_b[i] = (compute_numerical_gradient(model.biases[u], i, model, X, y_to_input))
-
+            print(grad)
+            print(numerical_gradients_b)
             np.testing.assert_almost_equal(grad, numerical_gradients_b, decimal=6)
     print("All bias gradients match!")
 
@@ -391,68 +393,78 @@ if __name__ == "__main__":
     #                                [[1, 0, 0],
     #                                 [0, 1, 0],
     #                                 [0, 0, 1]], decimal=3)
-    X = np.array([[1, 1, 1],
-                  [4, 0, 1],
-                  [6, 0, 0],
-                  [0, 0, 0],
-                  [0, 2, 1]])
-    y = np.array([1, 1, 0, 0, 1])
-    y_encoded = np.array([[0, 1],
-                          [0, 1],
-                          [1, 0],
-                          [1, 0],
-                          [0, 1]])
+    # X = np.array([[1, 1, 1],
+    #               [4, 0, 1],
+    #               [6, 0, 0],
+    #               [0, 0, 0],
+    #               [0, 2, 1]])
+    # y = np.array([1, 1, 0, 0, 1])
+    # y_encoded = np.array([[0, 1],
+    #                       [0, 1],
+    #                       [1, 0],
+    #                       [1, 0],
+    #                       [0, 1]])
             
 
     # print(numerical_gradients_w)
     # print(numerical_gradients_b)
 
-    # X, y = doughnut()
-    # fitter = ANNClassification(units=[5])
-    # fitter.fit(X, y, lr=0.3, epochs=9000)
+    X, y = doughnut()
+    fitter = ANNClassification(units=[5])
+    fitter.fit(X, y, lr=0.3, epochs=9000)
 
-    # preds = np.argmax(fitter.predict(X), axis=1)
-    # print(preds)
-    # print(y)
-    # print(np.mean(preds == y))
+    preds = np.argmax(fitter.predict(X), axis=1)
+    print(preds)
+    print(y)
+    print(np.mean(preds == y))
     
-    # X, y = squares()
-    # fitter = ANNClassification(units=[5])
-    # fitter.fit(X, y, lr=0.4, epochs=11000)
+    X, y = squares()
+    fitter = ANNClassification(units=[5])
+    fitter.fit(X, y, lr=0.4, epochs=11000)
 
-    # preds = np.argmax(fitter.predict(X), axis=1)
-    # print(preds)
-    # print(y)
-    # print(np.mean(preds == y))
-    fitter = ANNClassification(units=[2, 6, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
-    print(type(fitter).__name__)
-    compare_gradients(X, y, y_encoded, fitter)
-    print(fitter.activation_function_names)
-
-
-    fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
-    print(type(fitter).__name__)
-    compare_gradients(X, y, y_encoded, fitter)
-    print(fitter.activation_function_names)
-
-    fitter = ANNClassification(units=[2, 6, 3], activation_function_names=[], testing_grad=True)
-    print(type(fitter).__name__)
-    compare_gradients(X, y, y_encoded, fitter)
-    print(fitter.activation_function_names)
+    preds = np.argmax(fitter.predict(X), axis=1)
+    print(preds)
+    print(y)
+    print(np.mean(preds == y))
+    # fitter = ANNClassification(units=[2, 6, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
 
 
-    fitter = ANNRegression(units=[2, 15, 4], activation_function_names=[], testing_grad=True)
-    print(type(fitter).__name__)
-    compare_gradients(X, y, y_encoded, fitter)
-    print(fitter.activation_function_names)
+    # fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
 
-    fitter = ANNClassification(units=[], activation_function_names=[], testing_grad=True)
-    print(type(fitter).__name__)
-    compare_gradients(X, y, y_encoded, fitter)
-    print(fitter.activation_function_names)
+    # fitter = ANNClassification(units=[2, 6, 3], activation_function_names=[], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
 
-    fitter = ANNRegression(units=[], activation_function_names=[], testing_grad=True)
-    print(type(fitter).__name__)
-    compare_gradients(X, y, y_encoded, fitter)
-    print(fitter.activation_function_names)
+
+    # fitter = ANNRegression(units=[2, 15, 4], activation_function_names=[], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
+
+    # fitter = ANNClassification(units=[], activation_function_names=[], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
+
+    # fitter = ANNRegression(units=[], activation_function_names=[], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
+
+    # fitter = ANNClassification(units=[2], activation_function_names=[], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
+
+    # fitter = ANNRegression(units=[2], activation_function_names=[], testing_grad=True)
+    # print(type(fitter).__name__)
+    # compare_gradients(X, y, y_encoded, fitter)
+    # print(fitter.activation_function_names)
 
