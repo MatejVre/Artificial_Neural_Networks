@@ -2,8 +2,8 @@ import numpy as np
 import csv
 
 
-class ANNClassification:
-    # implement me
+class ArtificialNeuralNetwork:
+    
     def __init__(self, units=[], activation_function_names=[],lambda_=0, testing=False, testing_grad=False):
         self.units = units
         self.ws = []
@@ -25,14 +25,13 @@ class ANNClassification:
 
         #WHY? If we do testing and testing grad, then the weights are initialized to 1 which leads to gradients on the small dataset to be small enough
         #which makes them match. This was uncovered when implementing relu without adapting backpropagation and noticing the grad tests did not fail
-
+    
     def build(self, X, y):
         #input and output layers depend on the data?
         self.input_layer_size = X.shape[1]
         np.random.seed(42)
         
-        unique_y = np.unique(y)
-        self.output_layer_size = len(unique_y)
+        self.set_output_layer_size(X, y)
 
         previous_layer_output_size = self.input_layer_size
 
@@ -67,7 +66,11 @@ class ANNClassification:
         self.ws.append(w)
 
         self.biases.append(np.ones(self.output_layer_size))
-
+    
+    def set_output_layer_size(self, X, y):
+        unique_y = np.unique(y)
+        self.output_layer_size = len(unique_y)
+    
     def predict(self, X):
 
         assert X.shape[1] == self.input_layer_size
@@ -86,7 +89,7 @@ class ANNClassification:
             self.zs.append(z)
 
             if i == len(self.ws) -1:
-                a = softmax(z)
+                a = self.output_layer(z)
             
             else:
                 a = self.activation_functions[i](z)
@@ -100,16 +103,12 @@ class ANNClassification:
         self.build(X, y)
         np.random.seed(42)
 
-        encoding_indices = np.unique(y)
-        encoded_labels = np.zeros((X.shape[0], len(encoding_indices)))
-
-        for i, lab in enumerate(y):
-            encoded_labels[i, lab] = 1
+        Y = self.process_y(X, y)
 
         for _ in range(epochs):
 
             predictions = self.predict(X)
-            delta = predictions - encoded_labels
+            delta = self.first_delta(predictions, Y)
 
             #TESTING
             self.gradients_w = [0] * len(self.ws)
@@ -140,12 +139,29 @@ class ANNClassification:
 
         return self
     
+    def output_layer(self, z):
+        return softmax(z)
+    
     def weights(self):
         list = []
         for i in range(len(self.ws)):
             list.append((np.column_stack((self.ws[i], self.biases[i]))).T)
         return list
     
+    def process_y(self, X, y):
+        encoding_indices = np.unique(y)
+        encoded_labels = np.zeros((X.shape[0], len(encoding_indices)))
+
+        for i, lab in enumerate(y):
+            encoded_labels[i, lab] = 1
+        
+        return encoded_labels
+
+    def first_delta(self, predictions, y):
+        return predictions - y
+
+class ANNClassification(ArtificialNeuralNetwork):
+        
     def loss(self, y_pred, y_true, epsilon=1e-15): #Cross entropy loss for classification
 
         y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
@@ -162,145 +178,23 @@ def softmax(z):
 def ReLU(z):
     return z * (z > 0)
 
+class ANNRegression(ArtificialNeuralNetwork):
 
-
-class ANNRegression:
-
-    def __init__(self, units=[], activation_function_names=[], lambda_=0.0, testing=False, testing_grad=False):
-        self.units = units
-        self.ws = []
-        self.biases = []
-        self.lambda_ = lambda_
-        self.activation_function_names = activation_function_names
-        self.activation_functions = []
-
-        self.zs = []
-        self.activations = []
-
-        self.input_layer_size = None
-        self.output_layer_size = None
-
-        self.gradients_w = [] #this part here is meant for testing the network
-        self.gradients_b = []
-        self.testing = testing
-        self.testing_grad = testing_grad
-
-    def build(self, X, y):
-        #input and output layers depend on the data?
-        self.input_layer_size = X.shape[1]
-        np.random.seed(42)
-
+    def set_output_layer_size(self, X, y):
         self.output_layer_size = 1
 
-        previous_layer_output_size = self.input_layer_size
-
-        #set activation functions
-        if len(self.activation_function_names) == 0:
-            self.activation_functions = [sigmoid] * len(self.units)
-            self.activation_function_names = ["sigmoid"] * len(self.units)
-
-        else:
-            assert len(self.activation_function_names) == len(self.units)
-
-            for act_fun_name in self.activation_function_names:
-                
-                if act_fun_name == "sigmoid":
-                    self.activation_functions.append(sigmoid)
-                elif act_fun_name == "relu":
-                    self.activation_functions.append(ReLU)
-                else:
-                    print("The activation function does not exist!")
-        for unit in self.units:
-
-            w = np.random.uniform(0, 1, size=(unit, previous_layer_output_size)) if not self.testing else np.ones((unit, previous_layer_output_size))
-
-            self.ws.append(w) #only for testing puropses for now, will be changed to random later :)
-            previous_layer_output_size = unit
-
-            self.biases.append(np.ones((unit)))
-        
-        w = np.random.uniform(0, 1, size=(self.output_layer_size, previous_layer_output_size)) if not self.testing else np.ones((self.output_layer_size, previous_layer_output_size))
-        self.ws.append(w)
-
-        self.biases.append(np.ones(self.output_layer_size))
-
-    def predict(self, X):
-
-        assert X.shape[1] == self.input_layer_size
-
-        previous_output = X
-
-        self.zs = []
-        self.activations = [previous_output]
-
-        for i in range(len(self.ws)):
-
-            weights_i = self.ws[i]
-            biases_i = self.biases[i]
-
-            z = (np.dot(previous_output, weights_i.T) + biases_i)
-            self.zs.append(z)
-
-            if i == len(self.ws) -1:
-                a = np.reshape(z, (-1)) #I want a vector instead of the matrix :)
-            
-            else:
-                a =self.activation_functions[i](z)
-
-            self.activations.append(a)
-            previous_output = a
-        
-        return previous_output
+    def output_layer(self, z):
+        return np.reshape(z, (-1))
     
-    def fit(self, X, y, lr=0.01, epochs=1):
-        self.build(X, y)
-        np.random.seed(42)
-
-        for _ in range(epochs):
-
-            predictions = self.predict(X)
-            delta = (predictions - y).reshape(-1, 1) #My past has come back to haunt me
-
-            #TESTING
-            self.gradients_w = [0] * len(self.ws)
-            self.gradients_b = [0] * len(self.biases)
-
-            for i in range(len(self.ws), 0, -1):
-
-                derivative_w = 1/X.shape[0] * (delta.T @ self.activations[i-1]) #1/X.shape[0] * in case i use the average of the loss (to be decided)
-                derivative_b = np.mean(delta, axis=0)
-
-                derivative_w += 2 * self.lambda_ * self.ws[i-1]
-
-                self.gradients_w[i-1] = derivative_w
-                self.gradients_b[i-1] = derivative_b
-
-                if i > 1:
-                    if self.activation_function_names[i-2] == "sigmoid":
-                        der = (self.activations[i-1] * (1-self.activations[i-1]))
-                
-                    elif self.activation_function_names[i-2] == "relu":
-                        der = (self.zs[i-2] > 0).astype(float)
-
-                    delta = (delta @ self.ws[i-1]) * der
-                if not self.testing_grad:
-                    self.ws[i-1] -= lr*derivative_w
-                    self.biases[i-1] -= lr*derivative_b
-
-        return self
-    
-    def weights(self):
-        list = []
-        for i in range(len(self.ws)):
-            list.append((np.column_stack((self.ws[i], self.biases[i]))).T)
-        return list
-
-
     def loss(self, vals, true_vals): #MSE renamed to loss for generalization
         return np.mean(1/2*(vals - true_vals)**2) + self.lambda_ * sum(np.sum(w**2) for w in self.ws)
 
+    def process_y(self, X, y):
+        return y
 
-# data reading
+    def first_delta(self, predictions, y):
+        return (predictions - y).reshape(-1, 1)
+
 
 def read_tab(fn, adict):
     content = list(csv.reader(open(fn, "rt"), delimiter="\t"))
@@ -374,40 +268,6 @@ def compare_gradients(X, y, y_encoded, model):
     print("All bias gradients match!")
 
 if __name__ == "__main__":
-    pass
-    # example NN use
-    # fitter = ANNClassification(units=[3,4], lambda_=0)
-    # X = np.array([
-    #     [1, 2, 3],
-    #     [4, 5, 6],
-    #     [7, 8, 9]
-    # ], dtype=float)
-    # y = np.array([0, 1, 2])
-    # model = fitter.fit(X, y, 0.01, epochs=2000)
-    # predictions = model.predict(X)
-    # print(predictions)
-    # y_encoded = np.array([[1,0,0],
-    #                       [0,1,0],
-    #                       [0,0,1]])
-    # np.testing.assert_almost_equal(predictions,
-    #                                [[1, 0, 0],
-    #                                 [0, 1, 0],
-    #                                 [0, 0, 1]], decimal=3)
-    # X = np.array([[1, 1, 1],
-    #               [4, 0, 1],
-    #               [6, 0, 0],
-    #               [0, 0, 0],
-    #               [0, 2, 1]])
-    # y = np.array([1, 1, 0, 0, 1])
-    # y_encoded = np.array([[0, 1],
-    #                       [0, 1],
-    #                       [1, 0],
-    #                       [1, 0],
-    #                       [0, 1]])
-            
-
-    # print(numerical_gradients_w)
-    # print(numerical_gradients_b)
 
     X, y = doughnut()
     fitter = ANNClassification(units=[5])
@@ -426,45 +286,58 @@ if __name__ == "__main__":
     print(preds)
     print(y)
     print(np.mean(preds == y))
-    # fitter = ANNClassification(units=[2, 6, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+
+    X = np.array([[1, 1, 1],
+                  [4, 0, 1],
+                  [6, 0, 0],
+                  [0, 0, 0],
+                  [0, 2, 1]])
+    y = np.array([1, 1, 0, 0, 1])
+    y_encoded = np.array([[0, 1],
+                          [0, 1],
+                          [1, 0],
+                          [1, 0],
+                          [0, 1]])
+    
+    fitter = ANNClassification(units=[2, 6, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
 
-    # fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
-    # fitter = ANNClassification(units=[2, 6, 3], activation_function_names=[], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNClassification(units=[2, 6, 3], activation_function_names=[], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
 
-    # fitter = ANNRegression(units=[2, 15, 4], activation_function_names=[], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNRegression(units=[2, 15, 4], activation_function_names=[], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
-    # fitter = ANNClassification(units=[], activation_function_names=[], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNClassification(units=[], activation_function_names=[], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
-    # fitter = ANNRegression(units=[], activation_function_names=[], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNRegression(units=[], activation_function_names=[], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
-    # fitter = ANNClassification(units=[2], activation_function_names=[], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNClassification(units=[2], activation_function_names=[], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 
-    # fitter = ANNRegression(units=[2], activation_function_names=[], testing_grad=True)
-    # print(type(fitter).__name__)
-    # compare_gradients(X, y, y_encoded, fitter)
-    # print(fitter.activation_function_names)
+    fitter = ANNRegression(units=[2], activation_function_names=[], testing_grad=True)
+    print(type(fitter).__name__)
+    compare_gradients(X, y, y_encoded, fitter)
+    print(fitter.activation_function_names)
 

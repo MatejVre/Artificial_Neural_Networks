@@ -5,3 +5,4 @@
 predict_lr.ipynb
 pytorch_playground.ipynb
 *.hdf5
+*.npy
