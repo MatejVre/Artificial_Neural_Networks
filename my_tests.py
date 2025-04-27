@@ -61,9 +61,6 @@ class test_ANN(unittest.TestCase):
         vals = fitter.predict(self.X_short)
         np.testing.assert_allclose(vals, np.array([2.90515, 2.76159]), atol=0.001)
 
-        
-
-#([[0.9481, 0.9481],[0.9405, 0.9405]])
 if __name__ == "__main__":
     import unittest
     unittest.main()

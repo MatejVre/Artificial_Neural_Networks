@@ -66,6 +66,7 @@ class ArtificialNeuralNetwork:
         self.ws.append(w)
 
         self.biases.append(np.ones(self.output_layer_size))
+        
     
     def set_output_layer_size(self, X, y):
         unique_y = np.unique(y)
@@ -129,7 +130,7 @@ class ArtificialNeuralNetwork:
                         der = (self.activations[i-1] * (1-self.activations[i-1]))
                 
                     elif self.activation_function_names[i-2] == "relu":
-                        der = (self.zs[i-2] > 0).astype(float)
+                        der = (self.zs[i-2] > 0)
 
                     delta = (delta @ self.ws[i-1]) * der
 
@@ -220,11 +221,6 @@ def squares():
 def compute_numerical_gradient(param, param_index, model, X, y, epsilon=1e-4):
     original_value = param[param_index]
 
-    # if type(model).__name__ == "ANNClassification":
-    #     loss_function = cross_entropy_loss
-    # else:
-    #     loss_function = mean_squared_error
-
     param[param_index] = original_value + epsilon
     y_pred_plus = model.predict(X)
     loss_plus = model.loss(y_pred_plus, y)
@@ -242,6 +238,7 @@ def compare_gradients(X, y, y_encoded, model):
     model.fit(X, y, epochs=1)
 
     if type(model).__name__ == "ANNClassification":
+        print("here")
         y_to_input = y_encoded
     else:
         y_to_input = y
@@ -258,34 +255,34 @@ def compare_gradients(X, y, y_encoded, model):
         np.testing.assert_almost_equal(grad, numerical_gradients_w, decimal=6)
     print("All weight gradients match!")
 
-    for u, grad in enumerate(model.gradients_b):
-            numerical_gradients_b = np.zeros_like(grad)
-            for i in range(grad.shape[0]):
-                numerical_gradients_b[i] = (compute_numerical_gradient(model.biases[u], i, model, X, y_to_input))
-            print(grad)
+    for g, grd in enumerate(model.gradients_b):
+            numerical_gradients_b = np.zeros_like(grd)
+            for i in range(grd.shape[0]):
+                numerical_gradients_b[i] = (compute_numerical_gradient(model.biases[g], i, model, X, y_to_input))
+            print(grd)
             print(numerical_gradients_b)
-            np.testing.assert_almost_equal(grad, numerical_gradients_b, decimal=6)
+            np.testing.assert_almost_equal(grd, numerical_gradients_b, decimal=6)
     print("All bias gradients match!")
 
 if __name__ == "__main__":
 
-    X, y = doughnut()
-    fitter = ANNClassification(units=[5])
-    fitter.fit(X, y, lr=0.3, epochs=9000)
+    # X, y = doughnut()
+    # fitter = ANNClassification(units=[5])
+    # fitter.fit(X, y, lr=0.3, epochs=9000)
 
-    preds = np.argmax(fitter.predict(X), axis=1)
-    print(preds)
-    print(y)
-    print(np.mean(preds == y))
+    # preds = np.argmax(fitter.predict(X), axis=1)
+    # print(preds)
+    # print(y)
+    # print(np.mean(preds == y))
     
-    X, y = squares()
-    fitter = ANNClassification(units=[5])
-    fitter.fit(X, y, lr=0.4, epochs=11000)
+    # X, y = squares()
+    # fitter = ANNClassification(units=[5])
+    # fitter.fit(X, y, lr=0.4, epochs=11000)
 
-    preds = np.argmax(fitter.predict(X), axis=1)
-    print(preds)
-    print(y)
-    print(np.mean(preds == y))
+    # preds = np.argmax(fitter.predict(X), axis=1)
+    # print(preds)
+    # print(y)
+    # print(np.mean(preds == y))
 
     X = np.array([[1, 1, 1],
                   [4, 0, 1],
@@ -299,13 +296,13 @@ if __name__ == "__main__":
                           [1, 0],
                           [0, 1]])
     
-    fitter = ANNClassification(units=[2, 6, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
+    fitter = ANNClassification(units=[2, 10, 3], lambda_=0.5, activation_function_names=["relu", "relu" , "sigmoid"], testing_grad=True)
     print(type(fitter).__name__)
     compare_gradients(X, y, y_encoded, fitter)
     print(fitter.activation_function_names)
 
 
-    fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "sigmoid", "sigmoid"], testing_grad=True)
+    fitter = ANNRegression(units=[2, 15, 4], lambda_=0.5, activation_function_names=["relu", "relu", "sigmoid"], testing_grad=True)
     print(type(fitter).__name__)
     compare_gradients(X, y, y_encoded, fitter)
     print(fitter.activation_function_names)
