@@ -1,7 +1,6 @@
 import numpy as np
 import csv
 
-
 class ArtificialNeuralNetwork:
     
     def __init__(self, units=[], activation_function_names=[],lambda_=0, testing=False, testing_grad=False):
@@ -66,7 +65,7 @@ class ArtificialNeuralNetwork:
         self.ws.append(w)
 
         self.biases.append(np.ones(self.output_layer_size))
-        
+
     
     def set_output_layer_size(self, X, y):
         unique_y = np.unique(y)
@@ -238,7 +237,6 @@ def compare_gradients(X, y, y_encoded, model):
     model.fit(X, y, epochs=1)
 
     if type(model).__name__ == "ANNClassification":
-        print("here")
         y_to_input = y_encoded
     else:
         y_to_input = y
@@ -263,6 +261,8 @@ def compare_gradients(X, y, y_encoded, model):
             print(numerical_gradients_b)
             np.testing.assert_almost_equal(grd, numerical_gradients_b, decimal=6)
     print("All bias gradients match!")
+
+
 
 if __name__ == "__main__":
 
@@ -338,3 +338,204 @@ if __name__ == "__main__":
     compare_gradients(X, y, y_encoded, fitter)
     print(fitter.activation_function_names)
 
+####### MODEL COMPARISON #####
+
+######################################################################################################################################
+#From here on is the code COPIED from jupyter notebooks since we have to submit everything in one python file#########################
+######################################################################################################################################
+
+#Moved the imports here because they slow down the code for no reason
+    # from torch import nn
+    # import torch
+
+    # class NeuralNetwork(nn.Module):
+
+    #     def __init__(self):
+    #         super().__init__()
+    #         torch.manual_seed(42)
+    #         self.flatten = nn.Flatten()
+    #         self.linear_relu_stack = nn.Sequential(
+    #             nn.Linear(4, 15),
+    #             nn.ReLU(),
+    #             nn.Linear(15, 3)
+    #         )
+    #         self._initialize_weights()
+
+    #     def forward(self, x):
+    #         x = self.flatten(x)
+    #         logits = self.linear_relu_stack(x)
+    #         return logits
+        
+    #     def _initialize_weights(self):
+    #         # Use NumPy to generate random numbers for weight initialization
+    #         for layer in self.linear_relu_stack:
+    #             if isinstance(layer, nn.Linear):
+    #                 # Use NumPy to generate random values for weight initialization
+    #                 weight_init = np.random.uniform(0, 1, size=layer.weight.shape)
+    #                 bias_init = np.ones_like(layer.bias.detach())  # Detach bias from computation graph
+
+    #                 # Assign the NumPy-generated weights to PyTorch layers
+    #                 layer.weight.data = torch.tensor(weight_init, dtype=torch.float32)
+    #                 layer.bias.data = torch.tensor(bias_init, dtype=torch.float32)
+        
+    # def train(X, y, model, learning_rate, num_epochs, loss_fn):
+    #     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    #     model.train()
+    #     torch.manual_seed(42)
+
+    #     for epoch in range(num_epochs):
+            
+    #         preds = model(X)
+
+    #         loss = loss_fn(preds, y)
+            
+    #         loss.backward()
+
+    #         if (epoch + 1) % 5 == 0:
+    #             print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}")
+
+    #         optimizer.step()
+            
+    #         optimizer.zero_grad()
+                
+    #         model.train() 
+
+    #     print("Training complete.")
+
+    # def test(X_test, y_test, model, loss_fn):
+    #     model.eval()
+        
+    #     with torch.no_grad():
+    #         preds = model(X_test)
+    #     _, predicted = torch.max(preds, 1)
+        
+    #     correct = (predicted == y_test).sum().item()
+    #     total = y_test.size(0)
+    #     accuracy = 100 * correct / total
+        
+    #     loss = loss_fn(preds, y_test)
+                                                                    
+    #     print(f"Test Accuracy: {accuracy:.2f}%")
+    #     print(f"Test Loss (Cross-Entropy): {loss:.4f}")
+    #     return predicted
+    # from sklearn.preprocessing import StandardScaler
+    # import matplotlib.pyplot as plt
+    # from nn import *
+    # from sklearn import datasets
+    # from sklearn.model_selection import train_test_split
+    # import random
+    # iris = datasets.load_iris()
+    # X, y = iris.data, iris.target
+
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # scaler = StandardScaler()
+    # X_train = scaler.fit_transform(X_train)
+    # X_test = scaler.transform(X_test)
+
+    # X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+    # X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+    # y_train_tensor = torch.tensor(y_train, dtype=torch.long)
+    # y_test_tensor = torch.tensor(y_test, dtype=torch.long)
+
+    # seed_value = 42
+    # np.random.seed(seed_value)
+    # torch.manual_seed(seed_value)
+    # torch.cuda.manual_seed_all(seed_value)
+
+    # torch_results = []
+    # torch_preds = []
+
+    # my_results = []
+    # my_preds = []
+
+    # similarity = []
+    # epochs = range(10, 750, 10)
+
+    # for eps in epochs:
+    #     model_torch = NeuralNetwork()
+    #     train(X_train_tensor, y_train_tensor, model_torch, 0.01, eps, nn.CrossEntropyLoss())
+    #     preds = test(X_test_tensor, y_test_tensor, model_torch, nn.CrossEntropyLoss()).detach().numpy()
+    #     torch_preds.append(preds)
+    #     torch_results.append(np.mean(preds == y_test))
+    #     my_model = ANNClassification([15], ["relu"])
+    #     my_model.fit(X_train, y_train, 0.01, eps)
+    #     preds2 = np.argmax(my_model.predict(X_test), axis=1)
+    #     my_preds.append(preds2)
+    #     my_results.append(np.mean(preds2 == y_test))
+
+    #     similarity.append(np.mean(preds2 == preds))
+    
+    # plt.plot(epochs, torch_results, label="Torch Results")
+    # plt.plot(epochs, my_results, linestyle="--", alpha=1, label="My Results")
+    # plt.plot(epochs, similarity, label="Similarity")
+
+    # plt.legend()
+
+    # plt.xlabel('Epochs')
+    # plt.ylabel('Value')
+
+    # plt.savefig("Classification comparison.pdf", bbox_inches="tight")
+
+
+
+#This here showcases the tests i have completed. Probably not a smart idea to run this within this file, or at least,
+#delete the unittest import after running to avoid circular imports.
+
+
+    # class test_ANN(unittest.TestCase):
+
+    # def setUp(self):
+    #     self.X = np.array([[1, 1, 1],
+    #                        [1, 0, 1],
+    #                        [1, 0, 0],
+    #                        [0, 0, 0],
+    #                        [0, 1, 1]])
+    #     self.y = np.array([1, 1, 0, 1, 1])
+
+    #     self.X_short = np.array([[1, 1],
+    #                              [0,1]])
+    #     self.y_short = np.array([1,0])
+
+    # def test_build_classification(self):
+    #     fitter = ANNClassification(units=[7, 21, 25], testing=True)
+    #     fitter.build(self.X, self.y)
+
+    #     self.assertEqual(fitter.ws[0].shape, (7, 3))
+    #     self.assertEqual(fitter.ws[1].shape, (21, 7))
+    #     self.assertEqual(fitter.ws[2].shape, (25, 21))
+    #     self.assertEqual(fitter.ws[3].shape, (2, 25))
+
+    #     self.assertEqual(fitter.biases[0].shape[0], 7)
+    #     self.assertEqual(fitter.biases[1].shape[0], 21)
+    #     self.assertEqual(fitter.biases[2].shape[0], 25)
+    #     self.assertEqual(fitter.biases[3].shape[0], 2)
+
+    # def test_forward_pass_classification(self):
+    #     fitter = ANNClassification(units=[2], testing=True)
+    #     fitter.build(self.X_short, self.y_short)
+
+    #     preds = fitter.predict(self.X_short)
+
+    #     np.testing.assert_allclose(preds, np.array([[0.5, 0.5],
+    #                                      [0.5, 0.5]]), atol=0.001)
+    
+    # def test_build_regression(self):
+    #     fitter = ANNRegression(units=[7, 21, 25], testing=True)
+    #     fitter.build(self.X, self.y)
+
+    #     self.assertEqual(fitter.ws[0].shape, (7, 3))
+    #     self.assertEqual(fitter.ws[1].shape, (21, 7))
+    #     self.assertEqual(fitter.ws[2].shape, (25, 21))
+    #     self.assertEqual(fitter.ws[3].shape, (1, 25))
+
+    #     self.assertEqual(fitter.biases[0].shape[0], 7)
+    #     self.assertEqual(fitter.biases[1].shape[0], 21)
+    #     self.assertEqual(fitter.biases[2].shape[0], 25)
+    #     self.assertEqual(fitter.biases[3].shape[0], 1)
+
+    # def test_forward_pass_regression(self):
+    #     fitter = ANNRegression(units=[2], testing=True)
+    #     fitter.build(self.X_short, self.y_short)
+
+    #     vals = fitter.predict(self.X_short)
+    #     np.testing.assert_allclose(vals, np.array([2.90515, 2.76159]), atol=0.001)
